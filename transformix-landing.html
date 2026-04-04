@@ -1,0 +1,1132 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Transformix AI — Your Ultimate Fitness Assistant</title>
+  <meta name="description" content="AI-generated workouts, personalized diet plans, strength tracking and access to 12,000+ gyms across India." />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,300;1,400;1,700;1,800;1,900&display=swap" rel="stylesheet" />
+  <style>
+    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+    html { overflow-x: hidden; }
+    body { font-family: 'Inter', sans-serif; background: #0a0a0a; color: #fff; overflow-x: hidden; -webkit-font-smoothing: antialiased; max-width: 100vw; }
+
+    /* Scrollbar */
+    ::-webkit-scrollbar { width: 4px; }
+    ::-webkit-scrollbar-track { background: #1a1a1a; }
+    ::-webkit-scrollbar-thumb { background: #333; border-radius: 10px; }
+
+    /* Scroll progress */
+    #prog { position: fixed; top: 0; left: 0; height: 2px; background: #4f46e5; z-index: 9999; width: 0; transition: width 0.1s; pointer-events: none; }
+
+    /* Neural canvas */
+    #nc { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; opacity: 0.35; }
+
+    /* Animations */
+    @keyframes pulse-dot { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:0.4;transform:scale(0.75)} }
+    @keyframes float1 { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-12px)} }
+    @keyframes float2 { 0%,100%{transform:translateY(0)} 50%{transform:translateY(10px)} }
+    @keyframes float3 { 0%,100%{transform:translateX(0)} 50%{transform:translateX(10px)} }
+    @keyframes marquee { from{transform:translateX(0)} to{transform:translateX(-50%)} }
+    @keyframes blink { 0%,49%{opacity:1} 50%,100%{opacity:0} }
+    @keyframes spin-slow { from{transform:rotate(0deg)} to{transform:rotate(360deg)} }
+    @keyframes fadein { from{opacity:0;transform:translateY(28px)} to{opacity:1;transform:translateY(0)} }
+    @keyframes scalein { from{opacity:0;transform:scale(0.94)} to{opacity:1;transform:scale(1)} }
+    @keyframes slideright { from{opacity:0;transform:translateX(40px)} to{opacity:1;transform:translateX(0)} }
+    @keyframes bar-grow { from{width:0} to{width:var(--w)} }
+
+    .reveal { opacity: 0; transform: translateY(28px); transition: opacity 0.8s cubic-bezier(.25,.46,.45,.94), transform 0.8s cubic-bezier(.25,.46,.45,.94); }
+    .reveal.in { opacity: 1; transform: translateY(0); }
+    .reveal-r { opacity: 0; transform: translateX(40px); transition: opacity 0.8s ease, transform 0.8s ease; }
+    .reveal-r.in { opacity: 1; transform: translateX(0); }
+    .reveal-s { opacity: 0; transform: scale(0.94); transition: opacity 0.9s ease, transform 0.9s ease; }
+    .reveal-s.in { opacity: 1; transform: scale(1); }
+
+    .delay-1 { transition-delay: 0.08s; }
+    .delay-2 { transition-delay: 0.16s; }
+    .delay-3 { transition-delay: 0.24s; }
+    .delay-4 { transition-delay: 0.32s; }
+
+    .float-1 { animation: float1 4s ease-in-out infinite; }
+    .float-2 { animation: float2 5s ease-in-out infinite; }
+    .float-3 { animation: float3 4.5s ease-in-out infinite; }
+
+    .status-dot { animation: pulse-dot 1.5s ease-in-out infinite; }
+    .blink { animation: blink 1.2s steps(1) infinite; }
+
+    /* Glass cards matching app */
+    .glass { background: rgba(24,24,27,0.9); border: 1px solid rgba(63,63,70,0.6); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); }
+    .glass-sm { background: rgba(24,24,27,0.7); border: 1px solid rgba(63,63,70,0.4); backdrop-filter: blur(12px); }
+
+    /* Hover tilt */
+    .tilt { transition: transform 0.3s ease, box-shadow 0.3s ease; }
+    .tilt:hover { transform: translateY(-3px) scale(1.01); }
+
+    /* Gradient text */
+    .grad-text { background: linear-gradient(135deg, #818cf8 0%, #6366f1 40%, #10b981 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+    .grad-text-em { background: linear-gradient(135deg, #34d399 0%, #10b981 50%, #6366f1 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+
+    /* Glow effects */
+    .glow-indigo { box-shadow: 0 0 40px rgba(79,70,229,0.25); }
+    .glow-emerald { box-shadow: 0 0 30px rgba(16,185,129,0.2); }
+    .glow-sm { box-shadow: 0 0 20px rgba(79,70,229,0.15); }
+
+    /* Custom input */
+    input, textarea { background: rgba(0,0,0,0.4) !important; color: white !important; }
+    input::placeholder, textarea::placeholder { color: rgba(113,113,122,0.6) !important; }
+    input:focus, textarea:focus { outline: none !important; border-color: rgba(99,102,241,0.6) !important; }
+
+    /* Range slider */
+    input[type=range] { accent-color: #6366f1; }
+
+    /* Scrollbar hide */
+    .no-scroll::-webkit-scrollbar { display: none; }
+    .no-scroll { -ms-overflow-style: none; scrollbar-width: none; }
+
+    /* Nav active */
+    .nav-link { transition: color 0.2s; }
+    .nav-link:hover { color: white; }
+
+    /* Feature card hover line */
+    .feat-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px; background: linear-gradient(90deg, #6366f1, #10b981); border-radius: 28px 28px 0 0; opacity: 0; transition: opacity 0.3s; }
+    .feat-card:hover::before { opacity: 1; }
+
+    /* Phone frame */
+    .phone-frame { background: #111; border: 1.5px solid rgba(255,255,255,0.08); border-radius: 44px; box-shadow: 0 40px 80px rgba(0,0,0,0.7), 0 0 0 1px rgba(255,255,255,0.04) inset; }
+
+    /* Stat counter */
+    @keyframes count-up { from{opacity:0;transform:translateY(20px)} to{opacity:1;transform:translateY(0)} }
+    .stat-anim { animation: count-up 0.6s ease forwards; }
+
+    /* Plan popular badge */
+    .popular-badge { background: linear-gradient(135deg, #6366f1, #4f46e5); }
+
+    /* Morphism glow orbs */
+    .orb { border-radius: 50%; filter: blur(100px); pointer-events: none; position: absolute; }
+  </style>
+</head>
+<body class="min-h-screen">
+
+<div id="prog"></div>
+
+<!-- ═══════════════ NAVBAR ═══════════════ -->
+<nav id="navbar" class="fixed top-0 left-0 right-0 z-50 transition-all duration-300">
+  <div class="max-w-screen-lg mx-auto px-5 h-14 flex items-center justify-between gap-4">
+    <!-- Logo -->
+    <a href="#" class="flex items-center gap-2.5 shrink-0 group">
+      <div class="w-9 h-9 bg-indigo-600 rounded-xl flex items-center justify-center shadow-lg shadow-indigo-600/30 group-hover:shadow-indigo-600/50 transition-all">
+        <span class="text-lg font-black italic text-white">T</span>
+      </div>
+      <span class="text-sm font-black italic uppercase tracking-tight text-white">Transformix</span>
+    </a>
+
+    <!-- Nav links (desktop) -->
+    <ul class="hidden md:flex items-center gap-1" id="navLinks">
+      <li><a href="#features" class="nav-link px-3 py-1.5 text-xs font-black uppercase tracking-widest text-zinc-500 rounded-lg hover:bg-zinc-900/60">Features</a></li>
+      <li><a href="#how-it-works" class="nav-link px-3 py-1.5 text-xs font-black uppercase tracking-widest text-zinc-500 rounded-lg hover:bg-zinc-900/60">How It Works</a></li>
+      <li><a href="#app-preview" class="nav-link px-3 py-1.5 text-xs font-black uppercase tracking-widest text-zinc-500 rounded-lg hover:bg-zinc-900/60">App</a></li>
+      <li><a href="#pricing" class="nav-link px-3 py-1.5 text-xs font-black uppercase tracking-widest text-zinc-500 rounded-lg hover:bg-zinc-900/60">Pricing</a></li>
+    </ul>
+
+    <!-- CTA + mobile menu toggle -->
+    <div class="flex items-center gap-2 shrink-0">
+      <a href="https://transformix-ai.vercel.app/" class="hidden md:block text-xs font-black uppercase tracking-widest text-zinc-500 hover:text-white transition-colors px-3 py-2">Log In</a>
+      <a href="#cta" class="bg-indigo-600 hover:bg-indigo-500 text-white px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest shadow-lg shadow-indigo-600/20 transition-all active:scale-95">
+        Get Started
+      </a>
+      <!-- Hamburger (mobile only) -->
+      <button id="menuToggle" class="md:hidden flex flex-col gap-1.5 p-2 rounded-xl bg-zinc-900 border border-zinc-800 ml-1" aria-label="Menu">
+        <span class="w-5 h-0.5 bg-zinc-400 rounded block transition-all"></span>
+        <span class="w-5 h-0.5 bg-zinc-400 rounded block transition-all"></span>
+        <span class="w-5 h-0.5 bg-zinc-400 rounded block transition-all"></span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Mobile nav drawer -->
+  <div id="mobileMenu" class="md:hidden hidden border-t border-zinc-900 bg-black/98 backdrop-blur-xl px-5 py-6 space-y-1">
+    <a href="#features" class="block py-3 text-sm font-black uppercase tracking-widest text-zinc-400 hover:text-white border-b border-zinc-900 transition-colors">Features</a>
+    <a href="#how-it-works" class="block py-3 text-sm font-black uppercase tracking-widest text-zinc-400 hover:text-white border-b border-zinc-900 transition-colors">How It Works</a>
+    <a href="#app-preview" class="block py-3 text-sm font-black uppercase tracking-widest text-zinc-400 hover:text-white border-b border-zinc-900 transition-colors">App</a>
+    <a href="#pricing" class="block py-3 text-sm font-black uppercase tracking-widest text-zinc-400 hover:text-white border-b border-zinc-900 transition-colors">Pricing</a>
+    <div class="pt-4 flex flex-col gap-3">
+      <a href="#" class="w-full text-center text-sm font-black uppercase tracking-widest text-zinc-400 hover:text-white py-3 border border-zinc-800 rounded-2xl transition-colors">Log In</a>
+      <a href="#cta" class="w-full text-center bg-indigo-600 hover:bg-indigo-500 text-white py-3 rounded-2xl font-black text-xs uppercase tracking-widest transition-all">Get Started Free</a>
+    </div>
+  </div>
+</nav>
+
+<!-- ═══════════════ HERO ═══════════════ -->
+<section id="hero" class="relative min-h-screen flex flex-col items-center justify-center overflow-hidden pt-14">
+  <!-- Background orbs -->
+  <div class="orb w-[400px] h-[400px] md:w-[600px] md:h-[600px] bg-indigo-900/25 top-[-150px] left-[-150px] md:top-[-200px] md:left-[-200px]"></div>
+  <div class="orb w-[350px] h-[350px] md:w-[500px] md:h-[500px] bg-emerald-900/15 bottom-[-80px] right-[-80px] md:bottom-[-100px] md:right-[-150px]"></div>
+
+  <!-- Neural canvas -->
+  <canvas id="nc"></canvas>
+
+  <!-- Hex grid overlay -->
+  <div class="absolute inset-0 pointer-events-none" style="background-image:url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='56' height='100'%3E%3Cpath d='M28 0 L56 16 L56 48 L28 64 L0 48 L0 16 Z' fill='none' stroke='rgba(99,102,241,0.03)' stroke-width='1'/%3E%3C/svg%3E\");background-size:56px 100px;opacity:0.8;"></div>
+
+  <div class="relative z-10 max-w-screen-lg mx-auto px-5 py-16 md:py-20 w-full">
+    <div class="grid lg:grid-cols-2 gap-10 lg:gap-12 items-center">
+
+      <!-- Left: Text — centered on mobile, left-aligned on desktop -->
+      <div class="space-y-6 text-center lg:text-left">
+
+        <!-- Status bar -->
+        <div class="flex justify-center lg:justify-start reveal">
+          <div class="flex items-center gap-2 bg-zinc-900/80 border border-zinc-800 px-3 py-2 rounded-full backdrop-blur-sm max-w-full overflow-hidden">
+            <span class="w-1.5 h-1.5 bg-emerald-500 rounded-full status-dot shrink-0" style="box-shadow:0 0 8px rgba(16,185,129,0.6)"></span>
+            <span class="text-[8px] font-black uppercase tracking-[0.15em] text-zinc-500 shrink-0 hidden sm:inline">Neural Engine Active</span>
+            <span class="text-zinc-700 hidden sm:inline">|</span>
+            <span class="text-[8px] font-black uppercase tracking-[0.1em] text-indigo-400 truncate" id="aiStatus">Processing Your Goals...</span>
+          </div>
+        </div>
+
+        <!-- Headline -->
+        <div class="reveal delay-1">
+          <h1 class="text-[clamp(3rem,12vw,6rem)] font-black italic uppercase tracking-tighter leading-[0.88] text-white">
+            Your AI<br>
+            <span class="grad-text">Fitness</span><br>
+            Coach.
+          </h1>
+        </div>
+
+        <p class="text-base text-zinc-400 font-medium leading-relaxed mx-auto lg:mx-0 max-w-md reveal delay-2">
+          AI-generated workouts, personalized diet plans, strength tracking, and access to <strong class="text-white">12,000+ gyms</strong> across India. All in one app.
+        </p>
+
+        <!-- Actions — stacked full-width on mobile -->
+        <div class="flex flex-col sm:flex-row gap-3 reveal delay-3">
+          <a href="#cta" class="bg-indigo-600 hover:bg-indigo-500 text-white px-7 py-4 rounded-2xl font-black text-xs uppercase tracking-widest shadow-xl shadow-indigo-600/30 flex items-center justify-center gap-2 transition-all active:scale-95 group w-full sm:w-auto">
+            Start Your Journey
+            <svg class="w-4 h-4 group-hover:translate-x-0.5 transition-transform" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+          </a>
+          <a href="#app-preview" class="glass text-zinc-400 hover:text-white px-7 py-4 rounded-2xl font-black text-xs uppercase tracking-widest flex items-center justify-center gap-2 transition-all w-full sm:w-auto">
+            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polygon points="10,8 16,12 10,16"/></svg>
+            See App
+          </a>
+        </div>
+
+        <!-- Trust stats — evenly spaced on mobile -->
+        <div class="flex justify-center lg:justify-start gap-4 sm:gap-6 pt-2 reveal delay-4">
+          <div class="text-center lg:text-left space-y-0.5">
+            <p class="text-xl sm:text-2xl font-black italic tracking-tighter text-white">12K+</p>
+            <p class="text-[7px] sm:text-[8px] font-black uppercase tracking-[0.15em] text-zinc-600">Partner Gyms</p>
+          </div>
+          <div class="w-px bg-zinc-800 self-stretch"></div>
+          <div class="text-center lg:text-left space-y-0.5">
+            <p class="text-xl sm:text-2xl font-black italic tracking-tighter text-white">50K+</p>
+            <p class="text-[7px] sm:text-[8px] font-black uppercase tracking-[0.15em] text-zinc-600">Active Members</p>
+          </div>
+          <div class="w-px bg-zinc-800 self-stretch"></div>
+          <div class="text-center lg:text-left space-y-0.5">
+            <p class="text-xl sm:text-2xl font-black italic tracking-tighter text-white">4.9★</p>
+            <p class="text-[7px] sm:text-[8px] font-black uppercase tracking-[0.15em] text-zinc-600">App Rating</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right: Phone mockup — hidden on small mobile, shown from sm up -->
+      <div class="relative flex justify-center items-center reveal-r mt-4 lg:mt-0" id="heroVisual">
+
+        <!-- Floating pills — only show on lg+ to avoid overflow -->
+        <div class="absolute -left-4 top-4 float-1 z-20 glass-sm px-3 py-2.5 rounded-2xl hidden lg:flex items-center gap-3 shadow-2xl" style="border-color:rgba(99,102,241,0.25)">
+          <span class="text-lg">🤖</span>
+          <div>
+            <p class="text-[10px] font-black text-white">AI Plan Ready</p>
+            <p class="text-[8px] text-zinc-500 font-bold uppercase">Push Day · 5 exercises</p>
+          </div>
+        </div>
+
+        <div class="absolute -left-6 bottom-20 float-2 z-20 glass-sm px-3 py-2.5 rounded-2xl hidden lg:flex items-center gap-3 shadow-2xl" style="border-color:rgba(16,185,129,0.25)">
+          <span class="text-lg">📈</span>
+          <div>
+            <p class="text-[10px] font-black text-white">+5kg Bench Press</p>
+            <p class="text-[8px] text-zinc-500 font-bold uppercase">Last 30 days</p>
+          </div>
+        </div>
+
+        <div class="absolute -right-2 top-1/3 float-3 z-20 glass-sm px-3 py-2.5 rounded-2xl hidden lg:flex items-center gap-3 shadow-2xl" style="border-color:rgba(99,102,241,0.2)">
+          <span class="text-lg">📍</span>
+          <div>
+            <p class="text-[10px] font-black text-white">3 Gyms Near You</p>
+            <p class="text-[8px] text-zinc-500 font-bold uppercase">FitZone 0.3km</p>
+          </div>
+        </div>
+
+        <!-- Phone — responsive sizing -->
+        <div class="phone-frame w-[240px] sm:w-[260px] lg:w-[280px] p-3 relative z-10 glow-indigo">
+          <!-- Screen content -->
+          <div class="bg-black rounded-[36px] overflow-hidden">
+            <!-- Status bar -->
+            <div class="flex justify-between items-center px-6 pt-4 pb-2">
+              <span class="text-xs font-black text-white">9:41</span>
+              <div class="w-24 h-5 bg-black rounded-full mx-auto -mt-4"></div>
+              <div class="flex items-center gap-1">
+                <div class="w-3 h-2 bg-white/60 rounded-sm"></div>
+                <div class="w-5 h-2.5 border border-white/60 rounded-sm relative"><div class="absolute inset-0.5 right-1 bg-white/60 rounded-sm"></div></div>
+              </div>
+            </div>
+
+            <!-- App content -->
+            <div class="px-4 pb-4 space-y-3 bg-[#0a0a0a]">
+              <!-- Greeting -->
+              <div class="flex items-center justify-between pt-2">
+                <div>
+                  <p class="text-[11px] font-black italic uppercase text-white">Evolve, King</p>
+                  <div class="flex items-center gap-1.5 mt-0.5">
+                    <span class="w-1.5 h-1.5 bg-indigo-500 rounded-full animate-pulse"></span>
+                    <span class="text-[7px] font-black text-zinc-600 uppercase tracking-widest">Protocol: Push/Pull/Legs</span>
+                  </div>
+                </div>
+                <div class="w-9 h-9 bg-zinc-900 border border-zinc-800 rounded-xl flex items-center justify-center font-black italic text-sm text-white shadow-lg">R</div>
+              </div>
+
+              <!-- Metrics row -->
+              <div class="grid grid-cols-3 gap-2">
+                <div class="bg-orange-500/5 border border-zinc-800/50 p-3 rounded-[1.5rem] text-center">
+                  <p class="text-xs font-black italic text-orange-500">1,840</p>
+                  <p class="text-[7px] font-black text-zinc-600 uppercase mt-0.5">Fuel</p>
+                </div>
+                <div class="bg-emerald-500/5 border border-zinc-800/50 p-3 rounded-[1.5rem] text-center">
+                  <p class="text-xs font-black italic text-emerald-500">85kg</p>
+                  <p class="text-[7px] font-black text-zinc-600 uppercase mt-0.5">Mass</p>
+                </div>
+                <div class="bg-indigo-500/5 border border-zinc-800/50 p-3 rounded-[1.5rem] text-center">
+                  <p class="text-xs font-black italic text-indigo-400">12.5%</p>
+                  <p class="text-[7px] font-black text-zinc-600 uppercase mt-0.5">Fat %</p>
+                </div>
+              </div>
+
+              <!-- Today's workout card -->
+              <div class="bg-indigo-600 p-4 rounded-[1.8rem] relative overflow-hidden">
+                <div class="absolute top-0 right-0 p-3 opacity-5">
+                  <svg class="w-16 h-16" viewBox="0 0 24 24" fill="currentColor"><path d="M20.57 14.86L22 13.43 20.57 12 17 15.57 8.43 7 12 3.43 10.57 2 9.14 3.43 7.71 2 5.57 4.14 4.14 2.71 2.71 4.14l1.43 1.43L2 7.71l1.43 1.43L2 10.57 3.43 12 7 8.43 15.57 17 12 20.57 13.43 22l1.43-1.43L16.29 22l2.14-2.14 1.43 1.43 1.43-1.43-1.43-1.43L22 16.29z"/></svg>
+                </div>
+                <div class="relative z-10">
+                  <div class="flex items-center gap-1.5 mb-2">
+                    <span class="text-[6px] font-black uppercase tracking-widest text-white/50 bg-white/10 px-2 py-0.5 rounded-full">Pending Activation</span>
+                  </div>
+                  <h3 class="text-xl font-black italic uppercase tracking-tighter text-white leading-none mb-4">Push Protocol</h3>
+                  <div class="flex gap-4 text-[7px] font-black uppercase text-white/70 mb-5">
+                    <span>AI-Optimized</span>
+                    <span>Hypertrophy</span>
+                  </div>
+                  <div class="bg-white text-indigo-600 font-black py-2.5 rounded-xl text-[8px] uppercase tracking-widest text-center">
+                    Synthesize Daily →
+                  </div>
+                </div>
+              </div>
+
+              <!-- Mission control (mini) -->
+              <div class="bg-zinc-900/60 p-3 rounded-[1.5rem] border border-zinc-800/60 space-y-2">
+                <p class="text-[6px] font-black uppercase text-zinc-700 tracking-[0.3em]">Mission Control</p>
+                <div class="flex items-center justify-between p-2.5 bg-black/40 border border-zinc-800/50 rounded-xl">
+                  <div class="flex items-center gap-2">
+                    <div class="w-6 h-6 bg-zinc-800 rounded-lg flex items-center justify-center text-[10px]">🥗</div>
+                    <span class="text-[8px] font-black uppercase text-zinc-300">Fuel Intake</span>
+                  </div>
+                  <div class="w-5 h-5 rounded-full bg-emerald-500 border-2 border-black flex items-center justify-center">
+                    <svg class="w-2.5 h-2.5 text-black" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M20 6L9 17l-5-5"/></svg>
+                  </div>
+                </div>
+                <div class="flex items-center justify-between p-2.5 bg-black/40 border border-zinc-800/50 rounded-xl">
+                  <div class="flex items-center gap-2">
+                    <div class="w-6 h-6 bg-zinc-800 rounded-lg flex items-center justify-center text-[10px]">💪</div>
+                    <span class="text-[8px] font-black uppercase text-zinc-300">Workout</span>
+                  </div>
+                  <div class="w-5 h-5 rounded-full border border-zinc-800"></div>
+                </div>
+              </div>
+
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- Scroll indicator -->
+  <div class="absolute bottom-8 left-1/2 -translate-x-1/2 z-10 flex flex-col items-center gap-2 animate-bounce">
+    <svg class="w-5 h-5 text-zinc-700" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 5v14M5 12l7 7 7-7"/></svg>
+  </div>
+</section>
+
+<!-- ═══════════════ MARQUEE ═══════════════ -->
+<div class="border-y border-zinc-900 overflow-hidden py-3 bg-black/50">
+  <div class="flex gap-10 whitespace-nowrap" style="animation:marquee 22s linear infinite">
+    <!-- Items (duplicated for seamless loop) -->
+    <span class="text-[9px] font-black uppercase tracking-[0.2em] text-zinc-600 flex items-center gap-3 shrink-0">AI Workout Generation <span class="w-1 h-1 bg-indigo-600 rounded-full"></span></span>
+    <span class="text-[9px] font-black uppercase tracking-[0.2em] text-zinc-600 flex items-center gap-3 shrink-0">Personalized Diet Plans <span class="w-1 h-1 bg-indigo-600 rounded-full"></span></span>
+    <span class="text-[9px] font-black uppercase tracking-[0.2em] text-zinc-600 flex items-center gap-3 shrink-0">12,000+ Partner Gyms <span class="w-1 h-1 bg-emerald-600 rounded-full"></span></span>
+    <span class="text-[9px] font-black uppercase tracking-[0.2em] text-zinc-600 flex items-center gap-3 shrink-0">Strength Tracking <span class="w-1 h-1 bg-indigo-600 rounded-full"></span></span>
+    <span class="text-[9px] font-black uppercase tracking-[0.2em] text-zinc-600 flex items-center gap-3 shrink-0">Injury Monitoring <span class="w-1 h-1 bg-indigo-600 rounded-full"></span></span>
+    <span class="text-[9px] font-black uppercase tracking-[0.2em] text-zinc-600 flex items-center gap-3 shrink-0">Creator Monetization <span class="w-1 h-1 bg-amber-500 rounded-full"></span></span>
+    <span class="text-[9px] font-black uppercase tracking-[0.2em] text-zinc-600 flex items-center gap-3 shrink-0">Squad Matching <span class="w-1 h-1 bg-indigo-600 rounded-full"></span></span>
+    <span class="text-[9px] font-black uppercase tracking-[0.2em] text-zinc-600 flex items-center gap-3 shrink-0">AI Workout Generation <span class="w-1 h-1 bg-indigo-600 rounded-full"></span></span>
+    <span class="text-[9px] font-black uppercase tracking-[0.2em] text-zinc-600 flex items-center gap-3 shrink-0">Personalized Diet Plans <span class="w-1 h-1 bg-indigo-600 rounded-full"></span></span>
+    <span class="text-[9px] font-black uppercase tracking-[0.2em] text-zinc-600 flex items-center gap-3 shrink-0">12,000+ Partner Gyms <span class="w-1 h-1 bg-emerald-600 rounded-full"></span></span>
+    <span class="text-[9px] font-black uppercase tracking-[0.2em] text-zinc-600 flex items-center gap-3 shrink-0">Strength Tracking <span class="w-1 h-1 bg-indigo-600 rounded-full"></span></span>
+    <span class="text-[9px] font-black uppercase tracking-[0.2em] text-zinc-600 flex items-center gap-3 shrink-0">Injury Monitoring <span class="w-1 h-1 bg-indigo-600 rounded-full"></span></span>
+    <span class="text-[9px] font-black uppercase tracking-[0.2em] text-zinc-600 flex items-center gap-3 shrink-0">Creator Monetization <span class="w-1 h-1 bg-amber-500 rounded-full"></span></span>
+    <span class="text-[9px] font-black uppercase tracking-[0.2em] text-zinc-600 flex items-center gap-3 shrink-0">Squad Matching <span class="w-1 h-1 bg-indigo-600 rounded-full"></span></span>
+  </div>
+</div>
+
+<!-- ═══════════════ STATS ═══════════════ -->
+<section class="py-12 md:py-20 bg-zinc-950/50">
+  <div class="max-w-screen-lg mx-auto px-5">
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-px bg-zinc-800/30 rounded-[2rem] md:rounded-[2.5rem] overflow-hidden reveal-s">
+      <div class="bg-[#0a0a0a] p-5 sm:p-8 md:p-10 text-center">
+        <p class="text-3xl sm:text-4xl md:text-5xl font-black italic tracking-tighter text-white" data-count="12000" data-suffix="K+">0</p>
+        <p class="text-[7px] sm:text-[8px] font-black uppercase tracking-[0.15em] text-zinc-600 mt-2">Partner Gyms<br>Across India</p>
+      </div>
+      <div class="bg-[#0a0a0a] p-5 sm:p-8 md:p-10 text-center">
+        <p class="text-3xl sm:text-4xl md:text-5xl font-black italic tracking-tighter text-white" data-count="50" data-suffix="K+">0</p>
+        <p class="text-[7px] sm:text-[8px] font-black uppercase tracking-[0.15em] text-zinc-600 mt-2">Active Members<br>Training Daily</p>
+      </div>
+      <div class="bg-[#0a0a0a] p-5 sm:p-8 md:p-10 text-center">
+        <p class="text-3xl sm:text-4xl md:text-5xl font-black italic tracking-tighter text-white" data-count="29" data-suffix="+">0</p>
+        <p class="text-[7px] sm:text-[8px] font-black uppercase tracking-[0.15em] text-zinc-600 mt-2">States &amp;<br>UT Coverage</p>
+      </div>
+      <div class="bg-[#0a0a0a] p-5 sm:p-8 md:p-10 text-center">
+        <p class="text-3xl sm:text-4xl md:text-5xl font-black italic tracking-tighter text-white" data-count-float="4.9" data-suffix="★">0</p>
+        <p class="text-[7px] sm:text-[8px] font-black uppercase tracking-[0.15em] text-zinc-600 mt-2">Average User<br>Rating</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════ FEATURES ═══════════════ -->
+<section id="features" class="py-16 md:py-24 bg-[#0a0a0a]">
+  <div class="max-w-screen-lg mx-auto px-4 sm:px-5">
+    <!-- Header -->
+    <div class="mb-10 md:mb-16 reveal">
+      <p class="text-[9px] font-black uppercase tracking-[0.3em] text-indigo-500 mb-3">Features</p>
+      <h2 class="text-3xl sm:text-4xl md:text-5xl font-black italic uppercase tracking-tighter leading-none text-white">Eight Tools.<br><span class="grad-text-em">One Mission.</span></h2>
+    </div>
+
+    <!-- Feature grid — single col mobile, 2 col sm, 3 col lg -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+
+      <!-- Big card -->
+      <div class="sm:col-span-2 lg:col-span-2 bg-zinc-900/40 border border-zinc-800 rounded-[2rem] sm:rounded-[2.5rem] p-6 sm:p-8 relative overflow-hidden group tilt feat-card reveal">
+        <div class="absolute top-0 right-0 p-6 opacity-5 group-hover:opacity-10 transition-opacity">
+          <svg class="w-32 h-32 text-indigo-500" viewBox="0 0 24 24" fill="currentColor"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-7 14l-5-5 1.41-1.41L12 14.17l7.59-7.59L21 8l-9 9z"/></svg>
+        </div>
+        <div class="w-12 h-12 bg-indigo-600/15 border border-indigo-500/20 rounded-2xl flex items-center justify-center text-2xl mb-6">🤖</div>
+        <p class="text-[8px] font-black uppercase tracking-[0.2em] text-indigo-400 mb-2">Core Intelligence</p>
+        <h3 class="text-2xl font-black italic uppercase tracking-tighter text-white mb-4 leading-none">AI-Generated Workouts,<br>Updated Weekly</h3>
+        <p class="text-sm text-zinc-500 font-medium leading-relaxed max-w-sm">Your goals, experience, and equipment — analyzed in real time. Every week, a new plan. Every session, perfectly calibrated for progressive overload.</p>
+        <!-- Mini preview -->
+        <div class="mt-6 grid grid-cols-3 gap-2">
+          <div class="bg-black/40 border border-zinc-800/50 p-3 rounded-2xl text-center">
+            <p class="text-[10px] font-black text-white italic">Push Day</p>
+            <p class="text-[7px] text-zinc-600 font-black uppercase mt-0.5">Today</p>
+          </div>
+          <div class="bg-black/40 border border-zinc-800/50 p-3 rounded-2xl text-center">
+            <p class="text-[10px] font-black text-white italic">Pull Day</p>
+            <p class="text-[7px] text-zinc-600 font-black uppercase mt-0.5">Tomorrow</p>
+          </div>
+          <div class="bg-black/40 border border-zinc-800/50 p-3 rounded-2xl text-center">
+            <p class="text-[10px] font-black text-white italic">Leg Day</p>
+            <p class="text-[7px] text-zinc-600 font-black uppercase mt-0.5">Day 3</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="bg-zinc-900/40 border border-zinc-800 rounded-[2rem] sm:rounded-[2.5rem] p-6 sm:p-8 group tilt feat-card relative overflow-hidden reveal">
+        <div class="w-12 h-12 bg-emerald-600/15 border border-emerald-500/20 rounded-2xl flex items-center justify-center text-2xl mb-6">🥗</div>
+        <p class="text-[8px] font-black uppercase tracking-[0.2em] text-emerald-400 mb-2">Nutrition</p>
+        <h3 class="text-xl font-black italic uppercase tracking-tighter text-white mb-3 leading-none">Personalized<br>Diet Plans</h3>
+        <p class="text-xs text-zinc-500 font-medium leading-relaxed">South Indian to Keto — your macros, your food culture, your goals.</p>
+        <!-- Macro bars -->
+        <div class="mt-5 space-y-2">
+          <div class="flex items-center gap-2">
+            <span class="text-[7px] font-black text-zinc-600 w-10 uppercase">Protein</span>
+            <div class="flex-1 h-1.5 bg-zinc-800 rounded-full overflow-hidden"><div class="h-full bg-gradient-to-r from-emerald-500 to-indigo-500 rounded-full" style="width:78%"></div></div>
+          </div>
+          <div class="flex items-center gap-2">
+            <span class="text-[7px] font-black text-zinc-600 w-10 uppercase">Carbs</span>
+            <div class="flex-1 h-1.5 bg-zinc-800 rounded-full overflow-hidden"><div class="h-full bg-gradient-to-r from-indigo-500 to-violet-500 rounded-full" style="width:62%"></div></div>
+          </div>
+          <div class="flex items-center gap-2">
+            <span class="text-[7px] font-black text-zinc-600 w-10 uppercase">Fats</span>
+            <div class="flex-1 h-1.5 bg-zinc-800 rounded-full overflow-hidden"><div class="h-full bg-gradient-to-r from-amber-500 to-orange-500 rounded-full" style="width:45%"></div></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="bg-zinc-900/40 border border-zinc-800 rounded-[2rem] sm:rounded-[2.5rem] p-6 sm:p-8 group tilt feat-card relative overflow-hidden reveal delay-1">
+        <div class="w-12 h-12 bg-blue-600/15 border border-blue-500/20 rounded-2xl flex items-center justify-center text-2xl mb-6">📊</div>
+        <p class="text-[8px] font-black uppercase tracking-[0.2em] text-blue-400 mb-2">Progress</p>
+        <h3 class="text-xl font-black italic uppercase tracking-tighter text-white mb-3 leading-none">Strength<br>Tracking</h3>
+        <p class="text-xs text-zinc-500 font-medium leading-relaxed">Track every set. AI recommends your next target weights automatically.</p>
+        <!-- Mini chart -->
+        <div class="mt-5 flex items-end gap-1 h-10">
+          <div class="flex-1 bg-zinc-800 rounded-t" style="height:40%"></div>
+          <div class="flex-1 bg-zinc-800 rounded-t" style="height:55%"></div>
+          <div class="flex-1 bg-zinc-800 rounded-t" style="height:65%"></div>
+          <div class="flex-1 bg-zinc-800 rounded-t" style="height:58%"></div>
+          <div class="flex-1 bg-gradient-to-t from-indigo-600 to-indigo-400 rounded-t shadow-[0_-4px_12px_rgba(99,102,241,0.4)]" style="height:88%"></div>
+        </div>
+        <p class="text-[7px] font-black text-emerald-500 uppercase mt-2">↑ +8% This Month</p>
+      </div>
+
+      <div class="bg-zinc-900/40 border border-zinc-800 rounded-[2rem] sm:rounded-[2.5rem] p-6 sm:p-8 group tilt feat-card relative overflow-hidden reveal delay-2">
+        <div class="w-12 h-12 bg-rose-600/15 border border-rose-500/20 rounded-2xl flex items-center justify-center text-2xl mb-6">🛡️</div>
+        <p class="text-[8px] font-black uppercase tracking-[0.2em] text-rose-400 mb-2">Safety</p>
+        <h3 class="text-xl font-black italic uppercase tracking-tighter text-white mb-3 leading-none">Injury<br>Monitoring</h3>
+        <p class="text-xs text-zinc-500 font-medium leading-relaxed">AI detects training gaps and adjusts intensity automatically.</p>
+      </div>
+
+      <div class="bg-indigo-600 border border-indigo-500/50 rounded-[2rem] sm:rounded-[2.5rem] p-6 sm:p-8 group tilt relative overflow-hidden reveal delay-3 shadow-2xl shadow-indigo-600/20">
+        <div class="absolute top-0 right-0 p-4 opacity-10"><svg class="w-20 h-20 text-white" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 14.5v-9l6 4.5-6 4.5z"/></svg></div>
+        <div class="w-12 h-12 bg-white/15 rounded-2xl flex items-center justify-center text-2xl mb-6">📍</div>
+        <p class="text-[8px] font-black uppercase tracking-[0.2em] text-white/60 mb-2">Gym Access</p>
+        <h3 class="text-xl font-black italic uppercase tracking-tighter text-white mb-3 leading-none">12,000+ Gyms<br>One Pass</h3>
+        <p class="text-xs text-white/60 font-medium leading-relaxed">Walk in with the app. No extra membership. Ever.</p>
+      </div>
+
+      <div class="bg-zinc-900/40 border border-zinc-800 rounded-[2rem] sm:rounded-[2.5rem] p-6 sm:p-8 group tilt feat-card relative overflow-hidden reveal delay-4">
+        <div class="w-12 h-12 bg-amber-600/15 border border-amber-500/20 rounded-2xl flex items-center justify-center text-2xl mb-6">💰</div>
+        <p class="text-[8px] font-black uppercase tracking-[0.2em] text-amber-400 mb-2">Creator Hub</p>
+        <h3 class="text-xl font-black italic uppercase tracking-tighter text-white mb-3 leading-none">Monetize<br>From Day 1</h3>
+        <p class="text-xs text-zinc-500 font-medium leading-relaxed">No minimum followers. Earn from your very first post.</p>
+      </div>
+
+      <div class="bg-zinc-900/40 border border-zinc-800 rounded-[2rem] sm:rounded-[2.5rem] p-6 sm:p-8 group tilt feat-card relative overflow-hidden reveal delay-1">
+        <div class="w-12 h-12 bg-violet-600/15 border border-violet-500/20 rounded-2xl flex items-center justify-center text-2xl mb-6">🤝</div>
+        <p class="text-[8px] font-black uppercase tracking-[0.2em] text-violet-400 mb-2">Community</p>
+        <h3 class="text-xl font-black italic uppercase tracking-tighter text-white mb-3 leading-none">Find Your<br>Squad</h3>
+        <p class="text-xs text-zinc-500 font-medium leading-relaxed">Match with nearby gym-goers who share your goals and schedule.</p>
+      </div>
+
+      <div class="bg-zinc-900/40 border border-zinc-800 rounded-[2rem] sm:rounded-[2.5rem] p-6 sm:p-8 group tilt feat-card relative overflow-hidden reveal delay-2">
+        <div class="w-12 h-12 bg-green-600/15 border border-green-500/20 rounded-2xl flex items-center justify-center text-2xl mb-6">🎁</div>
+        <p class="text-[8px] font-black uppercase tracking-[0.2em] text-green-400 mb-2">Rewards</p>
+        <h3 class="text-xl font-black italic uppercase tracking-tighter text-white mb-3 leading-none">Referral<br>Program</h3>
+        <p class="text-xs text-zinc-500 font-medium leading-relaxed">Invite friends, earn rewards. Offset your subscription completely.</p>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════ HOW IT WORKS ═══════════════ -->
+<section id="how-it-works" class="py-16 md:py-24" style="background:linear-gradient(180deg,#0a0a0a 0%,#0d0d14 100%)">
+  <div class="max-w-screen-lg mx-auto px-4 sm:px-5">
+    <div class="mb-10 md:mb-16 reveal">
+      <p class="text-[9px] font-black uppercase tracking-[0.3em] text-indigo-500 mb-3">How It Works</p>
+      <h2 class="text-3xl sm:text-4xl md:text-5xl font-black italic uppercase tracking-tighter leading-none text-white">Sign Up to<br><span class="grad-text">Transformation.</span></h2>
+    </div>
+
+    <div class="space-y-3">
+      <!-- Step 1 -->
+      <div class="glass rounded-[2rem] sm:rounded-[2.5rem] p-6 sm:p-8 flex flex-col md:flex-row gap-4 md:gap-6 items-start group hover:border-indigo-500/20 transition-all reveal">
+        <div class="text-4xl sm:text-6xl font-black italic tracking-tighter text-zinc-800/60 group-hover:text-indigo-600/20 transition-colors leading-none shrink-0 sm:w-16">01</div>
+        <div class="flex-1">
+          <div class="flex items-center gap-2 mb-3">
+            <div class="w-9 h-9 bg-zinc-800 rounded-xl flex items-center justify-center text-base shrink-0">👤</div>
+            <h3 class="text-lg sm:text-xl font-black italic uppercase tracking-tighter text-white leading-tight">Create Your Fitness Profile</h3>
+          </div>
+          <p class="text-sm text-zinc-500 font-medium leading-relaxed mb-4">Tell us your goals, fitness level, diet preferences, and equipment you have access to. Takes two minutes.</p>
+          <div class="flex flex-wrap gap-2">
+            <span class="bg-zinc-800 border border-zinc-700 px-3 py-1.5 rounded-full text-[8px] font-black uppercase text-zinc-400">🎯 Goal: Build Muscle</span>
+            <span class="bg-zinc-800 border border-zinc-700 px-3 py-1.5 rounded-full text-[8px] font-black uppercase text-zinc-400">🏋️ Intermediate</span>
+            <span class="bg-zinc-800 border border-zinc-700 px-3 py-1.5 rounded-full text-[8px] font-black uppercase text-zinc-400">🥗 Vegetarian</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 2 -->
+      <div class="glass rounded-[2rem] sm:rounded-[2.5rem] p-6 sm:p-8 flex flex-col md:flex-row gap-4 md:gap-6 items-start group hover:border-indigo-500/20 transition-all reveal delay-1">
+        <div class="text-4xl sm:text-6xl font-black italic tracking-tighter text-zinc-800/60 group-hover:text-indigo-600/20 transition-colors leading-none shrink-0 sm:w-16">02</div>
+        <div class="flex-1">
+          <div class="flex items-center gap-2 mb-3">
+            <div class="w-9 h-9 bg-indigo-600/20 border border-indigo-500/30 rounded-xl flex items-center justify-center text-base shrink-0">🤖</div>
+            <h3 class="text-lg sm:text-xl font-black italic uppercase tracking-tighter text-white leading-tight">AI Generates Your Complete Plan</h3>
+          </div>
+          <p class="text-sm text-zinc-500 font-medium leading-relaxed mb-4">Our neural engine creates a fully personalized workout and diet plan tailored to you — instantly. Updated every week.</p>
+          <div class="flex flex-wrap gap-2">
+            <span class="bg-indigo-600/10 border border-indigo-500/20 px-3 py-1.5 rounded-full text-[8px] font-black uppercase text-indigo-400">⚡ Generated in 3s</span>
+            <span class="bg-indigo-600/10 border border-indigo-500/20 px-3 py-1.5 rounded-full text-[8px] font-black uppercase text-indigo-400">🔄 Refreshes Weekly</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 3 -->
+      <div class="glass rounded-[2rem] sm:rounded-[2.5rem] p-6 sm:p-8 flex flex-col md:flex-row gap-4 md:gap-6 items-start group hover:border-indigo-500/20 transition-all reveal delay-2">
+        <div class="text-4xl sm:text-6xl font-black italic tracking-tighter text-zinc-800/60 group-hover:text-indigo-600/20 transition-colors leading-none shrink-0 sm:w-16">03</div>
+        <div class="flex-1">
+          <div class="flex items-center gap-2 mb-3">
+            <div class="w-9 h-9 bg-emerald-600/20 border border-emerald-500/30 rounded-xl flex items-center justify-center text-base shrink-0">📊</div>
+            <h3 class="text-lg sm:text-xl font-black italic uppercase tracking-tighter text-white leading-tight">Log Workouts, Track Growth</h3>
+          </div>
+          <p class="text-sm text-zinc-500 font-medium leading-relaxed mb-4">Track every set and rep. AI sees your progress and continuously raises the bar — only when you're ready.</p>
+          <div class="flex flex-wrap gap-2">
+            <span class="bg-emerald-600/10 border border-emerald-500/20 px-3 py-1.5 rounded-full text-[8px] font-black uppercase text-emerald-400">📈 +8% Strength / Month</span>
+            <span class="bg-emerald-600/10 border border-emerald-500/20 px-3 py-1.5 rounded-full text-[8px] font-black uppercase text-emerald-400">🔥 14-day streak</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 4 -->
+      <div class="glass rounded-[2rem] sm:rounded-[2.5rem] p-6 sm:p-8 flex flex-col md:flex-row gap-4 md:gap-6 items-start group hover:border-indigo-500/20 transition-all reveal delay-3">
+        <div class="text-4xl sm:text-6xl font-black italic tracking-tighter text-zinc-800/60 group-hover:text-indigo-600/20 transition-colors leading-none shrink-0 sm:w-16">04</div>
+        <div class="flex-1">
+          <div class="flex items-center gap-2 mb-3">
+            <div class="w-9 h-9 bg-amber-600/20 border border-amber-500/30 rounded-xl flex items-center justify-center text-base shrink-0">📍</div>
+            <h3 class="text-lg sm:text-xl font-black italic uppercase tracking-tighter text-white leading-tight">Train Anywhere in India</h3>
+          </div>
+          <p class="text-sm text-zinc-500 font-medium leading-relaxed mb-4">Walk into any of 12,000+ partner gyms with your digital pass. No extra memberships. No friction. Just show up.</p>
+          <div class="flex flex-wrap gap-2">
+            <span class="bg-amber-600/10 border border-amber-500/20 px-3 py-1.5 rounded-full text-[8px] font-black uppercase text-amber-400">✅ 1-Tap Check-in</span>
+            <span class="bg-amber-600/10 border border-amber-500/20 px-3 py-1.5 rounded-full text-[8px] font-black uppercase text-amber-400">🏙️ 29+ States Covered</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════ APP PREVIEW ═══════════════ -->
+<section id="app-preview" class="py-16 md:py-24 bg-[#0a0a0a] overflow-hidden">
+  <div class="max-w-screen-lg mx-auto px-4 sm:px-5">
+    <div class="text-center mb-12 md:mb-16 reveal">
+      <p class="text-[9px] font-black uppercase tracking-[0.3em] text-indigo-500 mb-3">The App</p>
+      <h2 class="text-3xl sm:text-4xl md:text-5xl font-black italic uppercase tracking-tighter text-white leading-none">Your Entire Fitness Life,<br><span class="grad-text">In One Place.</span></h2>
+    </div>
+
+    <!-- 3 phones — center phone only on mobile, all three on md+ -->
+    <div class="flex justify-center items-end gap-3 md:gap-6 reveal-s">
+
+      <!-- Left phone: Diet — hidden on mobile -->
+      <div class="phone-frame w-[180px] md:w-[210px] p-2.5 opacity-70 translate-y-8 scale-90 hidden md:block">
+        <div class="bg-black rounded-[32px] overflow-hidden p-3 space-y-3">
+          <p class="text-[8px] font-black italic uppercase text-white/70 px-1">🥗 Nutrition</p>
+          <div class="space-y-2">
+            <div>
+              <div class="flex justify-between text-[6px] font-black text-zinc-500 uppercase mb-1"><span>Protein</span><span>148g</span></div>
+              <div class="h-1 bg-zinc-800 rounded-full overflow-hidden"><div class="h-full bg-gradient-to-r from-emerald-500 to-indigo-500 rounded-full" style="width:78%"></div></div>
+            </div>
+            <div>
+              <div class="flex justify-between text-[6px] font-black text-zinc-500 uppercase mb-1"><span>Carbs</span><span>180g</span></div>
+              <div class="h-1 bg-zinc-800 rounded-full overflow-hidden"><div class="h-full bg-gradient-to-r from-indigo-500 to-violet-500 rounded-full" style="width:60%"></div></div>
+            </div>
+            <div>
+              <div class="flex justify-between text-[6px] font-black text-zinc-500 uppercase mb-1"><span>Fats</span><span>54g</span></div>
+              <div class="h-1 bg-zinc-800 rounded-full overflow-hidden"><div class="h-full bg-gradient-to-r from-amber-500 to-orange-400 rounded-full" style="width:45%"></div></div>
+            </div>
+          </div>
+          <div class="bg-zinc-900/50 border border-zinc-800/40 rounded-2xl p-2.5 space-y-1.5">
+            <p class="text-[6px] font-black text-zinc-600 uppercase">Meals Today</p>
+            <div class="text-[7px] text-zinc-400 font-bold">🥚 Paneer scramble · 320 kcal</div>
+            <div class="text-[7px] text-zinc-400 font-bold">🍚 Brown rice + dal · 480 kcal</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Center phone: Dashboard (bigger) -->
+      <div class="phone-frame w-[260px] sm:w-[270px] md:w-[280px] p-3 glow-indigo z-10">
+        <div class="bg-[#0a0a0a] rounded-[36px] overflow-hidden">
+          <div class="flex justify-between items-center px-5 pt-4 pb-2">
+            <span class="text-xs font-black text-white">9:41</span>
+            <span class="text-[8px] text-zinc-600 font-black">◾◾◾</span>
+          </div>
+          <div class="px-4 pb-5 space-y-3">
+            <div class="flex items-center justify-between">
+              <div>
+                <h3 class="text-[13px] font-black italic uppercase text-white">Evolve, King 💪</h3>
+                <div class="flex items-center gap-1.5 mt-0.5">
+                  <span class="w-1.5 h-1.5 bg-indigo-500 rounded-full animate-pulse"></span>
+                  <span class="text-[7px] text-zinc-600 font-black uppercase tracking-widest">Protocol: PPL</span>
+                </div>
+              </div>
+              <div class="bg-emerald-500/10 border border-emerald-500/20 px-2 py-1 rounded-full">
+                <span class="text-[8px] font-black text-emerald-500">🔥 14</span>
+              </div>
+            </div>
+
+            <div class="grid grid-cols-3 gap-1.5">
+              <div class="bg-orange-500/5 border border-zinc-800/50 p-2.5 rounded-[1.3rem] text-center">
+                <p class="text-[10px] font-black italic text-orange-500">1,840</p>
+                <p class="text-[6px] text-zinc-700 font-black uppercase mt-0.5">Fuel</p>
+              </div>
+              <div class="bg-emerald-500/5 border border-zinc-800/50 p-2.5 rounded-[1.3rem] text-center">
+                <p class="text-[10px] font-black italic text-emerald-500">85kg</p>
+                <p class="text-[6px] text-zinc-700 font-black uppercase mt-0.5">Mass</p>
+              </div>
+              <div class="bg-indigo-500/5 border border-zinc-800/50 p-2.5 rounded-[1.3rem] text-center">
+                <p class="text-[10px] font-black italic text-indigo-400">98%</p>
+                <p class="text-[6px] text-zinc-700 font-black uppercase mt-0.5">AI Acc.</p>
+              </div>
+            </div>
+
+            <div class="bg-indigo-600 p-4 rounded-[1.8rem] relative overflow-hidden">
+              <div class="relative z-10">
+                <p class="text-[6px] font-black text-white/50 uppercase tracking-[0.2em] mb-1.5">Today's Protocol</p>
+                <h4 class="text-lg font-black italic uppercase text-white leading-none tracking-tighter mb-3">Push Day →</h4>
+                <div class="space-y-1.5">
+                  <div class="flex justify-between text-[8px] font-black"><span class="text-white/50">Bench Press</span><span class="text-white">4×8 · 80kg ✓</span></div>
+                  <div class="flex justify-between text-[8px] font-black"><span class="text-white/50">Incline Press</span><span class="text-white">3×10 · 30kg ✓</span></div>
+                  <div class="flex justify-between text-[8px] font-black bg-white/10 px-2 py-1 rounded-lg"><span class="text-white">OHP</span><span class="text-white font-black">4×8 · 50kg →</span></div>
+                  <div class="flex justify-between text-[8px] font-black"><span class="text-white/30">Lat Raises</span><span class="text-white/30">3×15 · 12kg</span></div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Bottom nav -->
+            <div class="flex justify-around pt-2 border-t border-zinc-900">
+              <div class="flex flex-col items-center gap-0.5"><span class="text-sm">⚡</span><span class="text-[5px] text-indigo-400 font-black uppercase">Home</span></div>
+              <div class="flex flex-col items-center gap-0.5"><span class="text-sm">🏋️</span><span class="text-[5px] text-zinc-600 font-black uppercase">Train</span></div>
+              <div class="flex flex-col items-center gap-0.5"><span class="text-sm">🥗</span><span class="text-[5px] text-zinc-600 font-black uppercase">Diet</span></div>
+              <div class="flex flex-col items-center gap-0.5"><span class="text-sm">📈</span><span class="text-[5px] text-zinc-600 font-black uppercase">Progress</span></div>
+              <div class="flex flex-col items-center gap-0.5"><span class="text-sm">📍</span><span class="text-[5px] text-zinc-600 font-black uppercase">Gyms</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right phone: Progress — hidden on mobile -->
+      <div class="phone-frame w-[180px] md:w-[210px] p-2.5 opacity-70 translate-y-8 scale-90 hidden md:block">
+        <div class="bg-black rounded-[32px] overflow-hidden p-3 space-y-3">
+          <p class="text-[8px] font-black italic uppercase text-white/70 px-1">📈 Progress</p>
+          <p class="text-[6px] text-zinc-600 font-black uppercase px-1 mb-2">Strength +8% This Month</p>
+          <div class="flex items-end gap-1 h-12">
+            <div class="flex-1 bg-zinc-800 rounded-t" style="height:40%"></div>
+            <div class="flex-1 bg-zinc-800 rounded-t" style="height:55%"></div>
+            <div class="flex-1 bg-zinc-800 rounded-t" style="height:62%"></div>
+            <div class="flex-1 bg-zinc-800 rounded-t" style="height:56%"></div>
+            <div class="flex-1 bg-gradient-to-t from-indigo-600 to-indigo-400 rounded-t shadow-[0_-4px_8px_rgba(99,102,241,0.5)]" style="height:88%"></div>
+          </div>
+          <div class="bg-zinc-900/50 border border-zinc-800/40 rounded-2xl p-2.5 space-y-1.5">
+            <p class="text-[6px] font-black text-zinc-600 uppercase">Personal Records</p>
+            <div class="flex justify-between text-[7px]"><span class="text-zinc-400">Bench Press</span><span class="text-emerald-500 font-black">100kg 🎉</span></div>
+            <div class="flex justify-between text-[7px]"><span class="text-zinc-400">Squat</span><span class="text-indigo-400 font-black">120kg ↑</span></div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════ TESTIMONIALS ═══════════════ -->
+<section class="py-16 md:py-24 bg-zinc-950/50">
+  <div class="max-w-screen-lg mx-auto px-4 sm:px-5">
+    <div class="text-center mb-10 md:mb-16 reveal">
+      <p class="text-[9px] font-black uppercase tracking-[0.3em] text-indigo-500 mb-3">Community</p>
+      <h2 class="text-3xl sm:text-4xl md:text-5xl font-black italic uppercase tracking-tighter text-white leading-none">Loved by India's<br><span class="grad-text-em">Fitness Community.</span></h2>
+    </div>
+    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+      <div class="glass rounded-[2rem] sm:rounded-[2.5rem] p-6 sm:p-7 hover:border-indigo-500/20 transition-all reveal">
+        <div class="flex gap-0.5 mb-4">
+          <span class="text-amber-500 text-sm">★★★★★</span>
+        </div>
+        <p class="text-sm font-medium text-zinc-300 italic leading-relaxed mb-6">"The AI plan actually works. Lost 8kg in 3 months and finally understand progressive overload."</p>
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 bg-gradient-to-br from-indigo-500 to-emerald-500 rounded-2xl flex items-center justify-center text-xs font-black text-white shrink-0">PK</div>
+          <div>
+            <p class="text-sm font-black text-white">Priya K.</p>
+            <p class="text-[8px] font-black text-zinc-600 uppercase tracking-widest">Fat Loss · Pune</p>
+          </div>
+        </div>
+      </div>
+      <div class="glass rounded-[2rem] sm:rounded-[2.5rem] p-6 sm:p-7 hover:border-indigo-500/20 transition-all reveal delay-1">
+        <div class="flex gap-0.5 mb-4">
+          <span class="text-amber-500 text-sm">★★★★★</span>
+        </div>
+        <p class="text-sm font-medium text-zinc-300 italic leading-relaxed mb-6">"Walked into a gym in Hyderabad with just the app during a business trip. No hassle, no extra fees."</p>
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 bg-gradient-to-br from-violet-500 to-indigo-500 rounded-2xl flex items-center justify-center text-xs font-black text-white shrink-0">AS</div>
+          <div>
+            <p class="text-sm font-black text-white">Aryan S.</p>
+            <p class="text-[8px] font-black text-zinc-600 uppercase tracking-widest">Muscle Gain · Mumbai</p>
+          </div>
+        </div>
+      </div>
+      <div class="glass rounded-[2rem] sm:rounded-[2.5rem] p-6 sm:p-7 hover:border-indigo-500/20 transition-all reveal delay-2 sm:col-span-2 md:col-span-1">
+        <div class="flex gap-0.5 mb-4">
+          <span class="text-amber-500 text-sm">★★★★★</span>
+        </div>
+        <p class="text-sm font-medium text-zinc-300 italic leading-relaxed mb-6">"The diet plan actually respects South Indian food. Finally an app that understands my lifestyle."</p>
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 bg-gradient-to-br from-amber-500 to-orange-500 rounded-2xl flex items-center justify-center text-xs font-black text-white shrink-0">RV</div>
+          <div>
+            <p class="text-sm font-black text-white">Riya V.</p>
+            <p class="text-[8px] font-black text-zinc-600 uppercase tracking-widest">Strength · Bangalore</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════ GYM NETWORK ═══════════════ -->
+<section class="py-16 md:py-24 bg-[#0a0a0a]">
+  <div class="max-w-screen-lg mx-auto px-4 sm:px-5">
+    <div class="mb-10 md:mb-16 text-center reveal">
+      <p class="text-[9px] font-black uppercase tracking-[0.3em] text-emerald-500 mb-3">Gym Network</p>
+      <h2 class="text-3xl sm:text-4xl md:text-5xl font-black italic uppercase tracking-tighter text-white leading-none">12,000+ Gyms.<br><span class="grad-text-em">One Membership.</span></h2>
+    </div>
+    <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-px bg-zinc-800/30 rounded-[2rem] md:rounded-[2.5rem] overflow-hidden reveal-s">
+      <div class="bg-[#0a0a0a] p-4 sm:p-6 text-center hover:bg-zinc-900/30 transition-colors">
+        <div class="w-2 h-2 bg-emerald-500 rounded-full mx-auto mb-3" style="box-shadow:0 0 10px rgba(16,185,129,0.6)"></div>
+        <p class="text-xs font-black text-white/70">Mumbai</p>
+        <p class="text-[8px] text-zinc-600 font-bold">1,200+ gyms</p>
+      </div>
+      <div class="bg-[#0a0a0a] p-4 sm:p-6 text-center hover:bg-zinc-900/30 transition-colors">
+        <div class="w-2 h-2 bg-emerald-500 rounded-full mx-auto mb-3" style="box-shadow:0 0 10px rgba(16,185,129,0.6)"></div>
+        <p class="text-xs font-black text-white/70">Delhi</p>
+        <p class="text-[8px] text-zinc-600 font-bold">980+ gyms</p>
+      </div>
+      <div class="bg-[#0a0a0a] p-4 sm:p-6 text-center hover:bg-zinc-900/30 transition-colors">
+        <div class="w-2 h-2 bg-emerald-500 rounded-full mx-auto mb-3" style="box-shadow:0 0 10px rgba(16,185,129,0.6)"></div>
+        <p class="text-xs font-black text-white/70">Bangalore</p>
+        <p class="text-[8px] text-zinc-600 font-bold">840+ gyms</p>
+      </div>
+      <div class="bg-[#0a0a0a] p-4 sm:p-6 text-center hover:bg-zinc-900/30 transition-colors">
+        <div class="w-2 h-2 bg-emerald-500 rounded-full mx-auto mb-3" style="box-shadow:0 0 10px rgba(16,185,129,0.6)"></div>
+        <p class="text-xs font-black text-white/70">Hyderabad</p>
+        <p class="text-[8px] text-zinc-600 font-bold">620+ gyms</p>
+      </div>
+      <div class="bg-[#0a0a0a] p-4 sm:p-6 text-center hover:bg-zinc-900/30 transition-colors">
+        <div class="w-2 h-2 bg-emerald-500 rounded-full mx-auto mb-3" style="box-shadow:0 0 10px rgba(16,185,129,0.6)"></div>
+        <p class="text-xs font-black text-white/70">Chennai</p>
+        <p class="text-[8px] text-zinc-600 font-bold">520+ gyms</p>
+      </div>
+      <div class="bg-[#0a0a0a] p-4 sm:p-6 text-center hover:bg-zinc-900/30 transition-colors">
+        <div class="w-2 h-2 bg-emerald-500/30 rounded-full mx-auto mb-3"></div>
+        <p class="text-xs font-black text-white/30">+100 more</p>
+        <p class="text-[8px] text-zinc-700 font-bold">29 States</p>
+      </div>
+    </div>
+
+    <div class="mt-4 sm:mt-6 glass rounded-[2rem] sm:rounded-[2.5rem] p-6 sm:p-8 flex flex-col sm:flex-row gap-5 items-start sm:items-center justify-between reveal">
+      <div>
+        <h3 class="text-xl sm:text-2xl font-black italic uppercase tracking-tighter text-white leading-none mb-2">Is your gym not listed?</h3>
+        <p class="text-sm text-zinc-500">Partner with us and get discovered by 50,000+ active members.</p>
+      </div>
+      <a href="#" class="bg-emerald-600 hover:bg-emerald-500 text-black font-black text-[10px] uppercase tracking-widest px-6 py-4 rounded-2xl flex items-center justify-center gap-2 transition-all active:scale-95 w-full sm:w-auto shadow-xl shadow-emerald-600/20">
+        Partner With Us
+        <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+      </a>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════ PRICING ═══════════════ -->
+<section id="pricing" class="py-16 md:py-24 bg-zinc-950/50">
+  <div class="max-w-screen-lg mx-auto px-4 sm:px-5">
+    <div class="text-center mb-10 md:mb-16 reveal">
+      <p class="text-[9px] font-black uppercase tracking-[0.3em] text-indigo-500 mb-3">Pricing</p>
+      <h2 class="text-3xl sm:text-4xl md:text-5xl font-black italic uppercase tracking-tighter text-white leading-none">Power Up.<br><span class="grad-text">Choose Your Protocol.</span></h2>
+    </div>
+
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+
+      <!-- Starter -->
+      <div class="glass rounded-[2rem] sm:rounded-[2.5rem] p-6 sm:p-7 hover:border-zinc-700 transition-all reveal">
+        <div class="p-3 bg-zinc-800 rounded-2xl w-fit mb-5 text-base">🤖</div>
+        <p class="text-[8px] font-black uppercase tracking-[0.2em] text-zinc-500 mb-1">Starter</p>
+        <p class="text-3xl font-black italic tracking-tighter text-white mb-0.5">₹299</p>
+        <p class="text-[8px] text-zinc-600 font-bold uppercase mb-5">1 Month</p>
+        <ul class="space-y-2.5 mb-6">
+          <li class="flex items-start gap-2 text-[9px] font-black text-zinc-400 uppercase"><svg class="w-3 h-3 text-emerald-500 shrink-0 mt-0.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M20 6L9 17l-5-5"/></svg>AI Workouts & Diet</li>
+          <li class="flex items-start gap-2 text-[9px] font-black text-zinc-400 uppercase"><svg class="w-3 h-3 text-emerald-500 shrink-0 mt-0.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M20 6L9 17l-5-5"/></svg>Progress Tracking</li>
+          <li class="flex items-start gap-2 text-[9px] font-black text-zinc-400 uppercase"><svg class="w-3 h-3 text-emerald-500 shrink-0 mt-0.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M20 6L9 17l-5-5"/></svg>AI Chat Support</li>
+        </ul>
+        <button class="w-full bg-zinc-800 hover:bg-zinc-700 text-white py-3.5 rounded-2xl font-black text-[9px] uppercase tracking-widest transition-all active:scale-95">Choose Plan →</button>
+      </div>
+
+      <!-- Momentum (Popular) -->
+      <div class="bg-indigo-600 border border-indigo-500/50 rounded-[2rem] sm:rounded-[2.5rem] p-6 sm:p-7 relative overflow-hidden reveal delay-1 shadow-2xl shadow-indigo-600/25">
+        <div class="absolute top-0 right-0 bg-white text-indigo-600 text-[6px] font-black uppercase px-3 py-1 rounded-bl-xl tracking-[0.2em]">BEST VALUE</div>
+        <div class="p-3 bg-white/15 rounded-2xl w-fit mb-5 text-base">⚡</div>
+        <p class="text-[8px] font-black uppercase tracking-[0.2em] text-white/60 mb-1">Momentum</p>
+        <p class="text-3xl font-black italic tracking-tighter text-white mb-0.5">₹699</p>
+        <p class="text-[8px] text-white/40 font-bold uppercase mb-5">3 Months · ₹233/mo</p>
+        <ul class="space-y-2.5 mb-6">
+          <li class="flex items-start gap-2 text-[9px] font-black text-white/80 uppercase"><svg class="w-3 h-3 text-white shrink-0 mt-0.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M20 6L9 17l-5-5"/></svg>AI Workouts & Diet</li>
+          <li class="flex items-start gap-2 text-[9px] font-black text-white/80 uppercase"><svg class="w-3 h-3 text-white shrink-0 mt-0.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M20 6L9 17l-5-5"/></svg>Progress Tracking</li>
+          <li class="flex items-start gap-2 text-[9px] font-black text-white/80 uppercase"><svg class="w-3 h-3 text-white shrink-0 mt-0.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M20 6L9 17l-5-5"/></svg>AI Chat Support</li>
+          <li class="flex items-start gap-2 text-[9px] font-black text-white/80 uppercase"><svg class="w-3 h-3 text-white shrink-0 mt-0.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M20 6L9 17l-5-5"/></svg>Priority Support</li>
+        </ul>
+        <button class="w-full bg-white text-indigo-600 hover:bg-indigo-50 py-3.5 rounded-2xl font-black text-[9px] uppercase tracking-widest transition-all active:scale-95 shadow-xl">Choose Plan →</button>
+      </div>
+
+      <!-- Transformation -->
+      <div class="glass rounded-[2rem] sm:rounded-[2.5rem] p-6 sm:p-7 hover:border-emerald-500/20 transition-all reveal delay-2">
+        <div class="p-3 bg-emerald-600/15 border border-emerald-500/20 rounded-2xl w-fit mb-5 text-base">✨</div>
+        <p class="text-[8px] font-black uppercase tracking-[0.2em] text-emerald-400 mb-1">Transformation</p>
+        <p class="text-3xl font-black italic tracking-tighter text-white mb-0.5">₹1,099</p>
+        <p class="text-[8px] text-zinc-600 font-bold uppercase mb-5">6 Months · ₹183/mo</p>
+        <ul class="space-y-2.5 mb-6">
+          <li class="flex items-start gap-2 text-[9px] font-black text-zinc-400 uppercase"><svg class="w-3 h-3 text-emerald-500 shrink-0 mt-0.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M20 6L9 17l-5-5"/></svg>Everything in Momentum</li>
+          <li class="flex items-start gap-2 text-[9px] font-black text-zinc-400 uppercase"><svg class="w-3 h-3 text-emerald-500 shrink-0 mt-0.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M20 6L9 17l-5-5"/></svg>WhatsApp Integration</li>
+        </ul>
+        <button class="w-full bg-zinc-800 hover:bg-zinc-700 text-white py-3.5 rounded-2xl font-black text-[9px] uppercase tracking-widest transition-all active:scale-95">Choose Plan →</button>
+      </div>
+
+      <!-- Champion -->
+      <div class="glass border-amber-500/20 rounded-[2rem] sm:rounded-[2.5rem] p-6 sm:p-7 hover:border-amber-500/40 transition-all reveal delay-3">
+        <div class="p-3 bg-amber-600/15 border border-amber-500/20 rounded-2xl w-fit mb-5 text-base">👑</div>
+        <p class="text-[8px] font-black uppercase tracking-[0.2em] text-amber-400 mb-1">Yearly Champion</p>
+        <p class="text-3xl font-black italic tracking-tighter text-white mb-0.5">₹1,799</p>
+        <p class="text-[8px] text-zinc-600 font-bold uppercase mb-5">12 Months · ₹150/mo</p>
+        <ul class="space-y-2.5 mb-6">
+          <li class="flex items-start gap-2 text-[9px] font-black text-zinc-400 uppercase"><svg class="w-3 h-3 text-amber-500 shrink-0 mt-0.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M20 6L9 17l-5-5"/></svg>Everything Included</li>
+          <li class="flex items-start gap-2 text-[9px] font-black text-zinc-400 uppercase"><svg class="w-3 h-3 text-amber-500 shrink-0 mt-0.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M20 6L9 17l-5-5"/></svg>Free Merchandise</li>
+          <li class="flex items-start gap-2 text-[9px] font-black text-zinc-400 uppercase"><svg class="w-3 h-3 text-amber-500 shrink-0 mt-0.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M20 6L9 17l-5-5"/></svg>1-on-1 Consultation</li>
+        </ul>
+        <button class="w-full bg-zinc-800 hover:bg-amber-600 text-white py-3.5 rounded-2xl font-black text-[9px] uppercase tracking-widest transition-all active:scale-95">Choose Plan →</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════ FINAL CTA ═══════════════ -->
+<section id="cta" class="py-16 md:py-32 relative overflow-hidden">
+  <div class="orb w-[400px] h-[400px] md:w-[600px] md:h-[600px] bg-indigo-900/30 top-[-150px] left-[-150px]"></div>
+  <div class="orb w-[350px] h-[350px] md:w-[500px] md:h-[500px] bg-emerald-900/15 bottom-[-100px] right-[-100px]"></div>
+  <div class="max-w-screen-lg mx-auto px-4 sm:px-5 relative z-10">
+    <div class="glass rounded-[2.5rem] sm:rounded-[3rem] p-8 sm:p-14 md:p-20 text-center relative overflow-hidden reveal-s glow-indigo">
+      <div class="absolute inset-0 pointer-events-none" style="background:linear-gradient(135deg,rgba(99,102,241,0.06) 0%,transparent 50%,rgba(16,185,129,0.04) 100%)"></div>
+      <div class="relative z-10 space-y-6 sm:space-y-8">
+        <p class="text-[9px] font-black uppercase tracking-[0.3em] text-indigo-400">Start Today</p>
+        <h2 class="text-4xl sm:text-5xl md:text-6xl font-black italic uppercase tracking-tighter text-white leading-[0.95]">Your Transformation<br><span class="grad-text">Starts With AI</span></h2>
+        <p class="text-sm sm:text-base text-zinc-500 max-w-sm sm:max-w-md mx-auto font-medium leading-relaxed">Workouts. Diet. Progress. Community. Gyms. All powered by one neural core.</p>
+        <div class="flex flex-col sm:flex-row gap-3 justify-center items-center">
+          <a href="https://transformix-ai.vercel.app/" class="bg-indigo-600 hover:bg-indigo-500 text-white px-8 py-4 sm:py-5 rounded-2xl font-black text-xs uppercase tracking-widest shadow-2xl shadow-indigo-600/30 flex items-center justify-center gap-2 transition-all active:scale-95 group w-full sm:w-auto">
+            Start Your AI Fitness Journey
+            <svg class="w-4 h-4 group-hover:translate-x-0.5 transition-transform" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+          </a>
+        </div>
+        <p class="text-[9px] font-black text-zinc-700 uppercase tracking-widest">Free to start · No credit card · Cancel anytime</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════ FOOTER ═══════════════ -->
+<footer class="border-t border-zinc-900 py-10 md:py-12 bg-black/60">
+  <div class="max-w-screen-lg mx-auto px-4 sm:px-5">
+    <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-8 mb-8">
+      <div class="col-span-2 sm:col-span-3 md:col-span-1 mb-2 md:mb-0">
+        <div class="flex items-center gap-2 mb-3">
+          <div class="w-7 h-7 bg-indigo-600 rounded-lg flex items-center justify-center text-sm font-black italic text-white shadow-lg">T</div>
+          <span class="text-sm font-black italic uppercase text-white">Transformix</span>
+        </div>
+        <p class="text-[10px] text-zinc-600 font-medium leading-relaxed max-w-[200px]">AI-powered fitness for the next generation of India.</p>
+      </div>
+      <div>
+        <h5 class="text-[8px] font-black uppercase tracking-[0.2em] text-zinc-500 mb-4">Product</h5>
+        <div class="space-y-3">
+          <a href="#features" class="block text-[11px] text-zinc-600 font-bold hover:text-white transition-colors">Features</a>
+          <a href="#how-it-works" class="block text-[11px] text-zinc-600 font-bold hover:text-white transition-colors">How It Works</a>
+          <a href="#pricing" class="block text-[11px] text-zinc-600 font-bold hover:text-white transition-colors">Pricing</a>
+        </div>
+      </div>
+      <div>
+        <h5 class="text-[8px] font-black uppercase tracking-[0.2em] text-zinc-500 mb-4">Network</h5>
+        <div class="space-y-3">
+          <a href="#" class="block text-[11px] text-zinc-600 font-bold hover:text-white transition-colors">Gym Network</a>
+          <a href="#" class="block text-[11px] text-zinc-600 font-bold hover:text-white transition-colors">Partner Gyms</a>
+          <a href="#" class="block text-[11px] text-zinc-600 font-bold hover:text-white transition-colors">Community</a>
+        </div>
+      </div>
+      <div>
+        <h5 class="text-[8px] font-black uppercase tracking-[0.2em] text-zinc-500 mb-4">Creators</h5>
+        <div class="space-y-3">
+          <a href="#" class="block text-[11px] text-zinc-600 font-bold hover:text-white transition-colors">Creator Program</a>
+          <a href="#" class="block text-[11px] text-zinc-600 font-bold hover:text-white transition-colors">Monetization</a>
+          <a href="#" class="block text-[11px] text-zinc-600 font-bold hover:text-white transition-colors">Analytics</a>
+        </div>
+      </div>
+      <div>
+        <h5 class="text-[8px] font-black uppercase tracking-[0.2em] text-zinc-500 mb-4">Support</h5>
+        <div class="space-y-3">
+          <a href="#" class="block text-[11px] text-zinc-600 font-bold hover:text-white transition-colors">Help Center</a>
+          <a href="#" class="block text-[11px] text-zinc-600 font-bold hover:text-white transition-colors">Contact Us</a>
+          <a href="#" class="block text-[11px] text-zinc-600 font-bold hover:text-white transition-colors">Privacy Policy</a>
+        </div>
+      </div>
+    </div>
+    <div class="flex flex-col sm:flex-row justify-between items-center gap-2 pt-6 border-t border-zinc-900 text-center sm:text-left">
+      <p class="text-[9px] font-black text-zinc-700 uppercase tracking-widest">© 2026 Transformix Technologies Pvt. Ltd.</p>
+      <p class="text-[9px] font-black text-zinc-700 uppercase tracking-widest">Made with ❤️ for India's Fitness Community</p>
+    </div>
+  </div>
+</footer>
+
+<script>
+'use strict';
+
+// Mobile menu toggle
+const menuToggle = document.getElementById('menuToggle');
+const mobileMenu = document.getElementById('mobileMenu');
+if (menuToggle && mobileMenu) {
+  menuToggle.addEventListener('click', () => {
+    mobileMenu.classList.toggle('hidden');
+  });
+  // Close on link click
+  mobileMenu.querySelectorAll('a').forEach(a => {
+    a.addEventListener('click', () => mobileMenu.classList.add('hidden'));
+  });
+}
+
+// Scroll progress
+const prog = document.getElementById('prog');
+window.addEventListener('scroll', () => {
+  const pct = (scrollY / (document.documentElement.scrollHeight - innerHeight)) * 100;
+  prog.style.width = pct + '%';
+}, { passive: true });
+
+// Navbar scroll
+const navbar = document.getElementById('navbar');
+window.addEventListener('scroll', () => {
+  if (scrollY > 30) {
+    navbar.style.background = 'rgba(10,10,10,0.92)';
+    navbar.style.backdropFilter = 'blur(20px)';
+    navbar.style.borderBottom = '1px solid rgba(39,39,42,0.8)';
+  } else {
+    navbar.style.background = 'transparent';
+    navbar.style.backdropFilter = 'none';
+    navbar.style.borderBottom = 'none';
+  }
+}, { passive: true });
+
+// Reveal observer
+const obs = new IntersectionObserver((entries) => {
+  entries.forEach(e => {
+    if (e.isIntersecting) {
+      const siblings = e.target.parentElement?.querySelectorAll('.reveal, .reveal-r, .reveal-s');
+      if (siblings && siblings.length > 1) {
+        siblings.forEach((el, i) => setTimeout(() => el.classList.add('in'), i * 80));
+      } else {
+        e.target.classList.add('in');
+      }
+      obs.unobserve(e.target);
+    }
+  });
+}, { threshold: 0.08, rootMargin: '0px 0px -40px 0px' });
+
+document.querySelectorAll('.reveal, .reveal-r, .reveal-s').forEach(el => obs.observe(el));
+
+// Counter animation
+function animCount(el) {
+  const suffix = el.dataset.suffix || '';
+  const isFloat = el.dataset.countFloat;
+  const target = isFloat ? parseFloat(el.dataset.countFloat) : parseInt(el.dataset.count, 10);
+  const dur = 1600;
+  const start = performance.now();
+  const ease = t => 1 - Math.pow(1 - t, 3);
+  const fmt = (n) => isFloat ? n.toFixed(1) : n.toLocaleString();
+  (function step(now) {
+    const p = Math.min((now - start) / dur, 1);
+    el.textContent = fmt(ease(p) * target) + suffix;
+    if (p < 1) requestAnimationFrame(step);
+  })(performance.now());
+}
+
+const cObs = new IntersectionObserver(entries => {
+  entries.forEach(e => {
+    if (e.isIntersecting) { animCount(e.target); cObs.unobserve(e.target); }
+  });
+}, { threshold: 0.5 });
+document.querySelectorAll('[data-count],[data-count-float]').forEach(el => cObs.observe(el));
+
+// AI status rotator
+const statuses = ['Processing Your Goals...', 'Generating Workout Plan...', 'Calories Calculated...', 'Neural Fit Engine v2.4...', 'Analyzing Muscle Fatigue...', 'Form Analysis Complete ✓'];
+let sIdx = 0;
+const statusEl = document.getElementById('aiStatus');
+if (statusEl) {
+  setInterval(() => {
+    statusEl.style.opacity = '0';
+    setTimeout(() => {
+      statusEl.textContent = statuses[++sIdx % statuses.length];
+      statusEl.style.opacity = '1';
+      statusEl.style.transition = 'opacity 0.3s';
+    }, 300);
+  }, 2800);
+}
+
+// Smooth scroll
+document.querySelectorAll('a[href^="#"]').forEach(a => {
+  a.addEventListener('click', e => {
+    const t = document.querySelector(a.getAttribute('href'));
+    if (t) { e.preventDefault(); t.scrollIntoView({ behavior: 'smooth', block: 'start' }); }
+  });
+});
+
+// Neural canvas
+(function() {
+  const canvas = document.getElementById('nc');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  let W, H, nodes = [], mouse = { x: -999, y: -999 };
+  const N = 55, D = 120;
+  function resize() {
+    const hero = canvas.parentElement;
+    W = canvas.width = hero.offsetWidth;
+    H = canvas.height = hero.offsetHeight;
+  }
+  function init() {
+    nodes = Array.from({ length: N }, () => ({
+      x: Math.random() * W, y: Math.random() * H,
+      vx: (Math.random() - 0.5) * 0.35, vy: (Math.random() - 0.5) * 0.35,
+      r: Math.random() * 1.5 + 0.6, op: Math.random() * 0.3 + 0.15, ph: Math.random() * Math.PI * 2
+    }));
+  }
+  function draw() {
+    ctx.clearRect(0, 0, W, H);
+    nodes.forEach(n => {
+      n.x += n.vx; n.y += n.vy; n.ph += 0.015;
+      if (n.x < 0 || n.x > W) n.vx *= -1;
+      if (n.y < 0 || n.y > H) n.vy *= -1;
+      const dx = n.x - mouse.x, dy = n.y - mouse.y;
+      const md = Math.sqrt(dx * dx + dy * dy);
+      if (md < 80) { n.x += dx / md * 1; n.y += dy / md * 1; }
+      const a = n.op * (0.7 + 0.3 * Math.sin(n.ph));
+      ctx.beginPath(); ctx.arc(n.x, n.y, n.r, 0, Math.PI * 2);
+      ctx.fillStyle = `rgba(99,102,241,${a})`; ctx.fill();
+    });
+    for (let i = 0; i < nodes.length; i++) {
+      for (let j = i + 1; j < nodes.length; j++) {
+        const a = nodes[i], b = nodes[j];
+        const dx = a.x - b.x, dy = a.y - b.y;
+        const dist = Math.sqrt(dx * dx + dy * dy);
+        if (dist < D) {
+          ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y);
+          ctx.strokeStyle = `rgba(99,102,241,${(1 - dist / D) * 0.12})`; ctx.lineWidth = 0.6; ctx.stroke();
+        }
+      }
+    }
+    requestAnimationFrame(draw);
+  }
+  window.addEventListener('resize', () => { resize(); init(); }, { passive: true });
+  document.addEventListener('mousemove', e => { mouse.x = e.clientX; mouse.y = e.clientY; }, { passive: true });
+  resize(); init(); draw();
+})();
+
+// Card tilt
+document.querySelectorAll('.tilt').forEach(card => {
+  card.addEventListener('mousemove', e => {
+    const r = card.getBoundingClientRect();
+    const dx = (e.clientX - r.left - r.width / 2) / (r.width / 2);
+    const dy = (e.clientY - r.top - r.height / 2) / (r.height / 2);
+    card.style.transform = `perspective(800px) rotateX(${-dy * 4}deg) rotateY(${dx * 4}deg) translateY(-4px) scale(1.01)`;
+  });
+  card.addEventListener('mouseleave', () => { card.style.transform = ''; });
+});
+
+console.log('%c⚡ TRANSFORMIX LANDING PAGE LOADED', 'color:#6366f1;font-weight:900;font-size:13px;font-style:italic;letter-spacing:0.1em;');
+</script>
+
+</body>
+</html>
