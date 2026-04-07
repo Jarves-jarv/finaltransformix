@@ -1,0 +1,22 @@
+/* Tailwind CSS v4 — processed by PostCSS at build time */
+/* Result: ~10-15KB purged CSS (replaces 1.2MB Tailwind CDN engine) */
+@import "tailwindcss";
+
+/* Global base styles */
+body {
+  font-family: 'Inter', system-ui, sans-serif;
+  background-color: #0a0a0a;
+  color: #ffffff;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: #1a1a1a; }
+::-webkit-scrollbar-thumb { background: #333; border-radius: 10px; }
+
+/* Safe area insets for mobile */
+:root {
+  --sat: env(safe-area-inset-top);
+  --sab: env(safe-area-inset-bottom);
+}

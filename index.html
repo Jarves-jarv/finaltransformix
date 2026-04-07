@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full overflow-hidden">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+    <title>Transformix AI - Your Ultimate Fitness Assistant</title>
+    <meta name="description" content="Transformix AI is your personal AI-powered fitness coach. Get custom workout plans, diet tracking, and progress analytics." />
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+
+    <!-- Preconnect to Google Fonts for faster loading -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+
+    <!-- Non-blocking font load -->
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap"
+      media="print"
+      onload="this.media='all'"
+    />
+    <noscript>
+      <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet" />
+    </noscript>
+
+    <style>
+      body {
+        font-family: 'Inter', sans-serif;
+        background-color: #0a0a0a;
+        color: #ffffff;
+        -webkit-tap-highlight-color: transparent;
+      }
+      ::-webkit-scrollbar { width: 6px; }
+      ::-webkit-scrollbar-track { background: #1a1a1a; }
+      ::-webkit-scrollbar-thumb { background: #333; border-radius: 10px; }
+      :root {
+        --sat: env(safe-area-inset-top);
+        --sab: env(safe-area-inset-bottom);
+      }
+    </style>
+  </head>
+  <body class="h-full overflow-hidden">
+    <div id="root" class="h-full"></div>
+    <script type="module" src="/index.tsx"></script>
+  </body>
+</html>

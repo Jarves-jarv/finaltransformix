@@ -1,0 +1,9 @@
+{
+  "name": "Transformix AI",
+  "description": "Transformix — AI-powered gym assistant for workouts, meals, progress, and all-India gym access.",
+  "requestFramePermissions": [
+    "camera",
+    "microphone",
+    "geolocation"
+  ]
+}
