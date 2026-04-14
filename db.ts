@@ -1,6 +1,6 @@
 
 import Dexie, { type EntityTable } from 'dexie';
-import { UserProfile, Exercise, WorkoutSplit, Gym, GymEquipmentRequest } from '../types';
+import { UserProfile, Exercise, WorkoutSplit, Gym, GymEquipmentRequest } from './types';
 
 interface DBWorkout {
   id?: number;
